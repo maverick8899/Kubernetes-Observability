@@ -1,0 +1,26 @@
+version: '3'
+services:
+    backend:
+        image: maverick0809/todob
+        container_name: backend
+        networks:
+            - demo-ci
+        ports:
+            - '8080:8080'
+        environment:
+            - MONGO_URI=mongodb+srv://maverick:toisethanhcong2003@cluster0.mfjoicd.mongodb.net/Todo
+            - PORT=8080
+    frontend:
+        image: maverick0809/todof
+        container_name: frontend
+        networks:
+            - demo-ci
+        ports:
+            - '3000:3000'
+        stdin_open: true
+        tty: true
+        depends_on:
+            - backend
+networks:
+    demo-ci:
+        name: demo-ci
