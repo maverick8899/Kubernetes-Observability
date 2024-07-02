@@ -1,0 +1,30 @@
+filebeatConfig:
+    filebeat.yml: |
+        filebeat.inputs:
+        - type: container
+          paths:
+            - /var/log/containers/frontend*.log
+          tags: ["elk-frontend"]
+          processors:
+        #   - add_kubernetes_metadata:
+        #       host: ${NODE_NAME}
+        #       matchers:
+        #       - logs_path:
+        #           logs_path: "/var/log/containers/"
+        output.logstash:
+          hosts: ['logstash:5044']
+
+resources:
+    requests:
+        cpu: '100m'
+        memory: '512M'
+    limits:
+        cpu: '1000m'
+        memory: '1004M'
+# Request smaller persistent volumes.
+volumeClaimTemplate:
+    accessModes: ['ReadWriteOnce']
+    storageClassName: 'nfs-client'
+    resources:
+        requests:
+            storage: 3Gi

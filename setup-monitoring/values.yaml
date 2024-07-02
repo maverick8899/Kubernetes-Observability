@@ -386,7 +386,7 @@ alertmanager:
             smtp_smarthost: smtp.gmail.com:587
             smtp_auth_username: 'trankimbang0809@gmail.com'
             smtp_auth_identity: 'trankimbang0809@gmail.com'
-            smtp_auth_password: 'tktfvdqecoifppzx'
+            smtp_auth_password: 'jnaqzpgihhuupldk'
             #@ ----------------------------------------------------------------
         inhibit_rules:
             - source_matchers:
@@ -421,8 +421,8 @@ alertmanager:
         #@ ----------- @custom route --------------------------------------------------------
         route:
             group_interval: 5s
-            group_wait: 5m
-            repeat_interval: 1h
+            group_wait: 5s
+            repeat_interval: 5s
             receiver: admin #^ fallback receiver
             routes:
                 #? Star Solutions.
@@ -462,31 +462,33 @@ alertmanager:
                               receiver: slack-warning #> \
         receivers:
             #@ ----------- @custom receivers--------------------------------------------------------
+            #~ Opsgenie
             - name: 'opsgenie'
               opsgenie_configs:
-                  - api_key: 'eed75283-4aef-424f-bfed-0e4dadd8ac6e'
+                  - api_key: '0ab78b6f-21b3-449a-9450-d11dd5cdf447'
                     api_url: https://api.eu.opsgenie.com/
                     send_resolved: true
                     message: "{{ range .Alerts }}{{ .Annotations.summary }}{{ .Annotations.timestamp }}\n{{ end }}"
                     description: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"
                     priority: '{{ range .Alerts }}{{ if eq .Labels.severity "critical"}}P2{{else}}P3{{end}}{{end}}'
                     tags: "{{ range .Alerts }}{{.Labels.severity}}  {{ .Labels.app_type}}\n{{ end }}"
+            #~ Slack
             - name: 'slack-alert'
               slack_configs:
-                  - api_url: 'https://hooks.slack.com/services/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'
+                  - api_url: 'https://hooks.slack.com/services/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'
                     channel: '#alert'
                     send_resolved: true
                     title: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"
                     text: "{{ range .Alerts }}{{ .Annotations.description }}{{ .Annotations.timestamp }}\n{{ end }}"
             - name: 'slack-warning'
               slack_configs:
-                  - api_url: 'https://hooks.slack.com/services/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'
+                  - api_url: 'https://hooks.slack.com/services/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'
                     channel: '#warning'
                     send_resolved: true
                     title: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"
                     text: "{{ range .Alerts }}{{ .Annotations.description }}{{ .Annotations.timestamp }}\n{{ end }}"
 
-            #* ~~~~~~~~~~~~ list emails ~~~~~~~~~~~~~~~~~
+            #~ Email
             - name: admin
               email_configs:
                   - to: '2151050035bang@ou.edu.vn'
@@ -3580,15 +3582,15 @@ prometheus:
         # additionalScrapeConfigs: []   nginx-exporter-service.default.svc.cluster.local:9113
         additionalScrapeConfigs:
             - job_name: nodejs-job
-            #   scrape_interval: 30s
-            #   scrape_timeout: 5s
+              #   scrape_interval: 30s
+              #   scrape_timeout: 5s
               metrics_path: /metrics
               scheme: http
               static_configs:
                   - targets: ['backend.default.svc.cluster.local:8080']
             - job_name: nginx-exporter
-            #   scrape_interval: 30s
-            #   scrape_timeout: 5s
+              #   scrape_interval: 30s
+              #   scrape_timeout: 5s
               metrics_path: /metrics
               scheme: http
               static_configs:

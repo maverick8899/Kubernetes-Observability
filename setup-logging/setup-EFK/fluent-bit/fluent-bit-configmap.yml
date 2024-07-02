@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: fluent-bit-config
+    namespace: logging
+    labels:
+        k8s-app: fluent-bit
+data:
+    fluent-bit.conf: |
+        [SERVICE]
+            Flush         1
+            Log_Level     info
+            Daemon        off
+            Parsers_File  parsers.conf  #? Import file parsers below
+
+        @INCLUDE input-kubernetes.conf
+        @INCLUDE output-elasticsearch.conf
+    input-kubernetes.conf: |
+        [INPUT]
+            Name              tail
+            Tag               kube.*
+            Path              /var/log/containers/*.log
+            Exclude_Path      /var/log/containers/frontend*.log , /var/log/containers/backend*.log
+            Parser            docker
+            DB                /var/log/flb_kube.db
+            Mem_Buf_Limit     5MB   
+            #^ Skip_Long_Lines   On
+            Refresh_Interval  10
+        [INPUT]
+            Name              tail
+            Tag               kube.frontend
+            Path              /var/log/containers/frontend*.log
+            Parser            nginx
+            DB                /var/log/flb_kube.db
+            Mem_Buf_Limit     5MB
+            #^ Skip_Long_Lines   On
+            Refresh_Interval  10
+        [INPUT]
+            Name              tail
+            Tag               kube.backend
+            Path              /var/log/containers/backend*.log
+            Parser            docker
+            DB                /var/log/flb_kube.db
+            Mem_Buf_Limit     5MB
+            #^ Skip_Long_Lines   On
+            Refresh_Interval  10
+    output-elasticsearch.conf: |
+        [OUTPUT]
+            Name            es
+            Match           *
+            Host            ${FLUENT_ELASTICSEARCH_HOST}
+            Port            ${FLUENT_ELASTICSEARCH_PORT}
+            Logstash_Format On
+            Logstash_Prefix fluent-bit
+            Retry_Limit     False
+        [OUTPUT]
+            Name            es
+            Match           kube.frontend
+            Host            ${FLUENT_ELASTICSEARCH_HOST}
+            Port            ${FLUENT_ELASTICSEARCH_PORT}
+            Logstash_Format On
+            Logstash_Prefix frontend
+            Retry_Limit     False
+        [OUTPUT]
+            Name            es
+            Match           kube.backend
+            Host            ${FLUENT_ELASTICSEARCH_HOST}
+            Port            ${FLUENT_ELASTICSEARCH_PORT}
+            Logstash_Format On
+            Logstash_Prefix backend
+            Retry_Limit     False
+    parsers.conf: |
+        [PARSER]
+            Name   nginx
+            Format regex
+            Regex ^(?<remote>[^ ]*) (?<host>[^ ]*) (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^\"]*?)(?: +\S*)?)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")?$
+            Time_Key time
+            Time_Format %d/%b/%Y:%H:%M:%S %z
+        [PARSER]
+            Name        docker
+            Format      json
+            Time_Key    time
+            Time_Format %Y-%m-%dT%H:%M:%S.%L
+            Time_Keep   On
+
